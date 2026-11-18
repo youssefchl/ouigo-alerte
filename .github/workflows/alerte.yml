@@ -1,0 +1,28 @@
+name: Alerte OUIGOSWAP
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # toutes les 5 min (GitHub peut retarder un peu)
+  workflow_dispatch:         # bouton "Run workflow" pour tester à la main
+    inputs:
+      test:
+        description: "Envoyer une notif de test ? (1 = oui)"
+        default: "1"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install playwright requests
+      - run: playwright install --with-deps chromium
+      - run: python check_ouigoswap.py
+        env:
+          URL_RECHERCHE: ${{ secrets.URL_RECHERCHE }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TEXTE_SI_VIDE: ${{ secrets.TEXTE_SI_VIDE }}
+          TEST: ${{ github.event.inputs.test }}
