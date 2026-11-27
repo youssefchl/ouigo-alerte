@@ -2,8 +2,8 @@ name: Alerte OUIGOSWAP
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # toutes les 5 min (GitHub peut retarder un peu)
-  workflow_dispatch:         # bouton "Run workflow" pour tester à la main
+    - cron: "2-59/5 * * * *"
+  workflow_dispatch:         # lancé aussi par cron-job.org
     inputs:
       test:
         description: "Envoyer une notif de test ? (1 = oui)"
@@ -11,13 +11,15 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04     # version fixe, plus stable que ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Retirer le dépôt Microsoft cassé (sinon apt plante)
+        run: sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft*.list || true
       - run: pip install playwright requests
       - run: playwright install --with-deps chromium
       - run: python check_ouigoswap.py
@@ -25,4 +27,5 @@ jobs:
           URL_RECHERCHE: ${{ secrets.URL_RECHERCHE }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           TEXTE_SI_VIDE: ${{ secrets.TEXTE_SI_VIDE }}
+          HEURE_MIN: ${{ secrets.HEURE_MIN }}
           TEST: ${{ github.event.inputs.test }}
